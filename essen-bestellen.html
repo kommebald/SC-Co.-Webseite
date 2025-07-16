@@ -5,165 +5,280 @@
   <title>Essen bestellen</title>
   <style>
     body {
-      background-color: #1a1a2e;
-      color: #fff;
+      background-color: #1e1e2f;
+      color: white;
       font-family: Arial, sans-serif;
       padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
-    h2 {
-      margin-top: 30px;
-      border-bottom: 2px solid #444;
+
+    body.light {
+      background-color: #f5f5f5;
+      color: #111;
     }
-    .item {
-      display: inline-block;
-      background: #2c2c3e;
-      padding: 10px;
-      margin: 5px;
-      border: 1px solid #555;
-      border-radius: 6px;
-      width: 200px;
-      vertical-align: top;
-    }
-    .item input {
-      width: 100%;
-      margin-top: 5px;
-      background: #111;
-      color: white;
-      text-align: center;
-    }
-    .locked {
-      color: #888;
-      font-style: italic;
-    }
-    #gesamt {
-      margin-top: 30px;
-      font-size: 1.2em;
-    }
-    button {
-      background: #4b4be7;
-      color: white;
-      padding: 10px 15px;
+
+    input[type="text"], input[type="number"] {
+      padding: 6px;
       border: none;
-      margin-top: 20px;
+      border-radius: 4px;
+      margin: 5px 0;
+    }
+
+    body.light input {
+      background: #fff;
+      color: #000;
+    }
+
+    body:not(.light) input {
+      background: #333;
+      color: #fff;
+    }
+
+    .steuerung {
+      margin-bottom: 20px;
+    }
+
+    .gerichte-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .gericht {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      width: 180px;
+      background-color: #2e2e3f;
+      transition: background-color 0.3s;
+    }
+
+    body.light .gericht {
+      background-color: #fff;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #5865F2;
+      color: white;
       cursor: pointer;
+    }
+
+    body.light button {
+      background-color: #0078d7;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+
+    .locked {
+      opacity: 0.5;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
-  <h1>Essen bestellen</h1>
 
-  <div id="menu"></div>
-  <div id="gesamt">Gesamt: 0 €</div>
-  <button onclick="sendOrder()">Bestellung absenden</button>
+<h1>Essen bestellen</h1>
 
-  <script>
-    const currentMonth = new Date().getMonth() + 1;
+<label>📍 Wohin soll geliefert werden?
+  <input type="text" id="zielort" placeholder="z. B. Raum 3B, EG">
+</label>
 
-    const menuData = {
-      "🍔 Klassiker vom Grill": [
-        ["Cheeseburger Supreme", 650],
-        ["BBQ-Bacon Burger", 700],
-        ["Veggie Crunch Burger 🥬", 590],
-        ["Doppel-Patty Inferno 🔥", 820]
-      ],
-      "🌭 Snacks & Fingerfood": [
-        ["XXL Currywurst", 450],
-        ["Hotdog Deluxe", 490],
-        ["Chicken Nuggets (6 Stück)", 350],
-        ["Chicken Nuggets (9 Stück)", 450],
-        ["Chicken Nuggets (12 Stück)", 550],
-        ["Mozzarella-Sticks 🧀", 390]
-      ],
-      "🍟 Beilagen & Extras": [
-        ["Pommes Spezial", 300],
-        ["Chili Cheese Fries 🌶️🧀", 390],
-        ["Wedges mit Sour Cream", 350],
-        ["Onion Rings 🧅", 320]
-      ],
-      "🥤 Drinks & Erfrischungen": [
-        ["Cola / Fanta / Sprite", 180],
-        ["Hausgemachter Eistee 🍋", 220],
-        ["Energy Fusion 🔋", 280],
-        ["Wassermelonen-Slushie 🍉", 250]
-      ],
-      "🎉 Monatsspecials": [
-        ["Mexican Meltdown – Burrito Burger 🌮", 790, 6],
-        ["Summer Chicken Wrap mit Mangosauce", 670, 7],
-        ["Der Scharfe Maxx 🌶️🌶️🌶️", 750, 8]
-      ]
-    };
+<div class="steuerung">
+  Menge:
+  <input type="number" id="menge" value="1" min="1">
+  <button onclick="auswahlKategorie('alle')">Alles auswählen</button>
+  <button onclick="auswahlKategorie('Getränke')">Nur Getränke</button>
+  <button onclick="auswahlKategorie('Hauptgerichte')">Nur Hauptgerichte</button>
+  <button onclick="auswahlKategorie('Snacks & Fingerfood')">Nur Snacks</button>
+  <button onclick="auswahlKategorie('Beilagen & Extras')">Nur Beilagen</button>
+  <button onclick="auswahlKategorie('🎉 Monatsspecials')">Nur Monatsspecials</button>
+  <button onclick="reset()">Zurücksetzen</button>
+</div>
 
-    const menuDiv = document.getElementById("menu");
+<div id="gerichte-bereiche"></div>
 
-    Object.entries(menuData).forEach(([kategorie, items]) => {
-      const title = document.createElement("h2");
-      title.textContent = kategorie;
-      menuDiv.appendChild(title);
+<h2 id="gesamt">Gesamt: 0 €</h2>
 
-      items.forEach(([name, preis, monat]) => {
-        const div = document.createElement("div");
-        div.className = "item";
+<button onclick="bestellungAbsenden()">🧾 Bestellung absenden</button>
+<button onclick="window.location.href='Webseite.html'">Zurück</button>
 
-        if (kategorie === "🎉 Monatsspecials" && monat !== currentMonth) {
-          div.innerHTML = `<div class="locked">🔒 ${name}<br><small>Nur im ${monatName(monat)}</small></div>`;
-        } else {
-          const id = name.replace(/\s+/g, "_");
-          div.innerHTML = `
-            <label>${name} (${(preis / 100).toFixed(2).replace('.', ',')} €)</label>
-            <input type="number" min="0" value="0" data-preis="${preis}" onchange="updateTotal()" />
-          `;
-        }
+<div class="footer">Made by kommebald</div>
 
-        menuDiv.appendChild(div);
-      });
-    });
+<script>
+const currentMonth = new Date().getMonth() + 1;
 
-    function monatName(m) {
-      return ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"][m - 1];
-    }
+const gerichte = {
+  'Hauptgerichte': [
+    ['Cheeseburger Supreme', 650],
+    ['BBQ-Bacon Burger', 700],
+    ['Veggie Crunch Burger 🥬', 590],
+    ['Doppel-Patty Inferno 🔥', 820],
+  ],
+  'Snacks & Fingerfood': [
+    ['XXL Currywurst', 450],
+    ['Hotdog Deluxe', 490],
+    ['Chicken Nuggets (6 Stück)', 350],
+    ['Chicken Nuggets (9 Stück)', 450],
+    ['Chicken Nuggets (12 Stück)', 550],
+    ['Mozzarella-Sticks 🧀', 390],
+  ],
+  'Beilagen & Extras': [
+    ['Pommes Spezial', 300],
+    ['Chili Cheese Fries 🌶️🧀', 390],
+    ['Wedges mit Sour Cream', 350],
+    ['Onion Rings 🧅', 320],
+  ],
+  'Getränke': [
+    ['Cola / Fanta / Sprite', 180],
+    ['Hausgemachter Eistee 🍋', 220],
+    ['Energy Fusion 🔋', 280],
+    ['Wassermelonen-Slushie 🍉', 250],
+  ],
+  '🎉 Monatsspecials': [
+    ['Mexican Meltdown – Burrito Burger 🌮', 790, 6],
+    ['Summer Chicken Wrap mit Mangosauce', 670, 7],
+    ['Der Scharfe Maxx 🌶️🌶️🌶️', 750, 8],
+  ]
+};
 
-    function updateTotal() {
-      let summe = 0;
-      document.querySelectorAll('input[type="number"]').forEach(input => {
-        const menge = parseInt(input.value) || 0;
-        const preis = parseInt(input.dataset.preis);
-        summe += menge * preis;
-      });
-      document.getElementById("gesamt").innerText = `Gesamt: ${(summe / 100).toFixed(2).replace('.', ',')} €`;
-    }
+function render() {
+  const bereiche = document.getElementById('gerichte-bereiche');
+  bereiche.innerHTML = '';
+  Object.entries(gerichte).forEach(([kategorie, items]) => {
+    const section = document.createElement('section');
+    const heading = document.createElement('h2');
+    heading.textContent = kategorie;
+    section.appendChild(heading);
 
-    function sendOrder() {
-      const auswahl = [];
-      let gesamt = 0;
+    const container = document.createElement('div');
+    container.className = 'gerichte-container';
 
-      document.querySelectorAll('input[type="number"]').forEach(input => {
-        const menge = parseInt(input.value) || 0;
-        const preis = parseInt(input.dataset.preis);
-        if (menge > 0) {
-          const label = input.previousElementSibling.innerText;
-          auswahl.push(`${label} ×${menge}`);
-          gesamt += menge * preis;
-        }
-      });
+    items.forEach(item => {
+      const [name, preis, monat] = item;
+      const div = document.createElement('div');
+      div.className = 'gericht';
+      div.dataset.kategorie = kategorie;
+      div.dataset.name = name;
 
-      if (auswahl.length === 0) {
-        alert("Keine Auswahl getroffen!");
-        return;
+      if (kategorie === '🎉 Monatsspecials' && monat !== currentMonth) {
+        div.classList.add('locked');
+        div.innerHTML = `
+          <strong>🔒 ${name}</strong><br>
+          <small>Nur im ${monatName(monat)}</small>
+        `;
+      } else {
+        div.innerHTML = `
+          <strong>${name} (${(preis / 100).toFixed(2).replace('.', ',')} €)</strong><br>
+          <input type="number" min="0" value="0" data-preis="${preis}" oninput="updateTotal()">
+        `;
       }
 
-      const nachricht = `🧾 Neue Bestellung:\n\n${auswahl.join("\n")}\n\nGesamt: ${(gesamt / 100).toFixed(2).replace('.', ',')} €`;
+      container.appendChild(div);
+    });
 
-      const webhook = "https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-"; // <- Ersetzen!
+    section.appendChild(container);
+    bereiche.appendChild(section);
+  });
+}
 
-      fetch(webhook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: nachricht })
-      }).then(() => {
-        alert("Bestellung erfolgreich gesendet!");
-        location.reload();
-      }).catch(() => alert("Fehler beim Senden!"));
+function monatName(m) {
+  return ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"][m - 1];
+}
+
+function updateTotal() {
+  let summe = 0;
+  document.querySelectorAll('.gericht input').forEach(input => {
+    const preis = parseInt(input.dataset.preis);
+    const menge = parseInt(input.value);
+    if (menge > 0) summe += preis * menge;
+  });
+  document.getElementById("gesamt").textContent = `Gesamt: ${(summe / 100).toFixed(2).replace('.', ',')} €`;
+}
+
+function auswahlKategorie(kategorie) {
+  const menge = parseInt(document.getElementById("menge").value) || 1;
+  document.querySelectorAll('.gericht').forEach(div => {
+    const input = div.querySelector('input');
+    if (!input) return;
+    if (kategorie === 'alle' || div.dataset.kategorie === kategorie) {
+      input.value = menge;
+    } else {
+      input.value = 0;
     }
-  </script>
+  });
+  updateTotal();
+}
+
+function reset() {
+  document.querySelectorAll('.gericht input').forEach(input => input.value = 0);
+  updateTotal();
+}
+
+function bestellungAbsenden() {
+  const zielort = document.getElementById("zielort").value.trim();
+  if (!zielort) {
+    alert("Bitte gib den Zielort an.");
+    return;
+  }
+
+  const bestellteGerichte = [];
+  let summe = 0;
+
+  document.querySelectorAll('.gericht').forEach(div => {
+    const input = div.querySelector('input');
+    if (!input) return;
+    const menge = parseInt(input.value);
+    const preis = parseInt(input.dataset.preis);
+    if (menge > 0) {
+      bestellteGerichte.push(`${menge}× ${div.dataset.name} (${(preis / 100).toFixed(2).replace('.', ',')} €)`);
+      summe += menge * preis;
+    }
+  });
+
+  if (bestellteGerichte.length === 0) {
+    alert("Bitte wähle mindestens ein Gericht aus.");
+    return;
+  }
+
+  const von = localStorage.getItem("discordName") || "Unbekannt";
+
+  const bestellung = {
+    von,
+    ort: zielort,
+    summe,
+    inhalt: bestellteGerichte.join("\n")
+  };
+
+  fetch("https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content: `||<@&1349057747236425900>||\n📦 **Neue Bestellung von ${von}**\n📍 **Ort:** ${zielort}\n🧾 **Inhalt:**\n${bestellteGerichte.join("\n")}\n💰 **Gesamtbetrag:** ${(summe / 100).toFixed(2).replace('.', ',')} €`
+    })
+  });
+
+  alert("Bestellung wurde gesendet!");
+  reset();
+  document.getElementById("zielort").value = "";
+}
+
+const theme = localStorage.getItem("theme");
+if (theme === "light") {
+  document.body.classList.add("light");
+}
+
+render();
+</script>
+
 </body>
 </html>
