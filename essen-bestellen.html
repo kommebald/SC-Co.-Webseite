@@ -1,162 +1,168 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Essensbestellung</title>
+  <meta charset="UTF-8" />
+  <title>Essen bestellen</title>
   <style>
     body {
+      background-color: #1a1a2e;
+      color: #fff;
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
       padding: 20px;
     }
-    h1 {
-      text-align: center;
-    }
-    .category {
-      margin-bottom: 30px;
-    }
-    .category h2 {
-      background-color: #ddd;
-      padding: 10px;
-      border-radius: 6px;
+    h2 {
+      margin-top: 30px;
+      border-bottom: 2px solid #444;
     }
     .item {
-      margin: 5px 0;
+      display: inline-block;
+      background: #2c2c3e;
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #555;
+      border-radius: 6px;
+      width: 200px;
+      vertical-align: top;
+    }
+    .item input {
+      width: 100%;
+      margin-top: 5px;
+      background: #111;
+      color: white;
+      text-align: center;
     }
     .locked {
-      color: #aaa;
+      color: #888;
+      font-style: italic;
+    }
+    #gesamt {
+      margin-top: 30px;
+      font-size: 1.2em;
     }
     button {
-      margin-top: 30px;
-      padding: 10px 20px;
-      font-size: 18px;
-      background: #333;
+      background: #4b4be7;
       color: white;
+      padding: 10px 15px;
       border: none;
+      margin-top: 20px;
       cursor: pointer;
-    }
-    button:hover {
-      background: #555;
     }
   </style>
 </head>
 <body>
-  <h1>Essensbestellung</h1>
-  <form id="orderForm"></form>
-  <button onclick="submitOrder()">Bestellung abschicken</button>
+  <h1>Essen bestellen</h1>
+
+  <div id="menu"></div>
+  <div id="gesamt">Gesamt: 0 €</div>
+  <button onclick="sendOrder()">Bestellung absenden</button>
 
   <script>
     const currentMonth = new Date().getMonth() + 1;
 
-    const menu = {
-      '🍔 Klassiker vom Grill': [
-        ['Cheeseburger Supreme', 650],
-        ['BBQ-Bacon Burger', 700],
-        ['Veggie Crunch Burger 🥬', 590],
-        ['Doppel-Patty Inferno 🔥', 820]
+    const menuData = {
+      "🍔 Klassiker vom Grill": [
+        ["Cheeseburger Supreme", 650],
+        ["BBQ-Bacon Burger", 700],
+        ["Veggie Crunch Burger 🥬", 590],
+        ["Doppel-Patty Inferno 🔥", 820]
       ],
-      '🌭 Snacks & Fingerfood': [
-        ['XXL Currywurst', 450],
-        ['Hotdog Deluxe', 490],
-        ['Chicken Nuggets (6 Stück)', 350],
-        ['Chicken Nuggets (9 Stück)', 450],
-        ['Chicken Nuggets (12 Stück)', 550],
-        ['Mozzarella-Sticks 🧀', 390]
+      "🌭 Snacks & Fingerfood": [
+        ["XXL Currywurst", 450],
+        ["Hotdog Deluxe", 490],
+        ["Chicken Nuggets (6 Stück)", 350],
+        ["Chicken Nuggets (9 Stück)", 450],
+        ["Chicken Nuggets (12 Stück)", 550],
+        ["Mozzarella-Sticks 🧀", 390]
       ],
-      '🍟 Beilagen & Extras': [
-        ['Pommes Spezial', 300],
-        ['Chili Cheese Fries 🌶️🧀', 390],
-        ['Wedges mit Sour Cream', 350],
-        ['Onion Rings 🧅', 320]
+      "🍟 Beilagen & Extras": [
+        ["Pommes Spezial", 300],
+        ["Chili Cheese Fries 🌶️🧀", 390],
+        ["Wedges mit Sour Cream", 350],
+        ["Onion Rings 🧅", 320]
       ],
-      '🥤 Drinks & Erfrischungen': [
-        ['Cola / Fanta / Sprite', 180],
-        ['Hausgemachter Eistee 🍋', 220],
-        ['Energy Fusion 🔋', 280],
-        ['Wassermelonen-Slushie 🍉', 250]
+      "🥤 Drinks & Erfrischungen": [
+        ["Cola / Fanta / Sprite", 180],
+        ["Hausgemachter Eistee 🍋", 220],
+        ["Energy Fusion 🔋", 280],
+        ["Wassermelonen-Slushie 🍉", 250]
       ],
-      '🎉 Monatsspecials': [
-        ['Mexican Meltdown – Burrito Burger 🌮', 790, 6], // Juni
-        ['Summer Chicken Wrap mit Mangosauce', 670, 7],   // Juli
-        ['Der Scharfe Maxx 🌶️🌶️🌶️', 750, 8]              // August
+      "🎉 Monatsspecials": [
+        ["Mexican Meltdown – Burrito Burger 🌮", 790, 6],
+        ["Summer Chicken Wrap mit Mangosauce", 670, 7],
+        ["Der Scharfe Maxx 🌶️🌶️🌶️", 750, 8]
       ]
     };
 
-    const form = document.getElementById('orderForm');
+    const menuDiv = document.getElementById("menu");
 
-    Object.entries(menu).forEach(([category, items]) => {
-      const div = document.createElement('div');
-      div.className = 'category';
-      const h2 = document.createElement('h2');
-      h2.textContent = category;
-      div.appendChild(h2);
+    Object.entries(menuData).forEach(([kategorie, items]) => {
+      const title = document.createElement("h2");
+      title.textContent = kategorie;
+      menuDiv.appendChild(title);
 
-      items.forEach(([name, price, month]) => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'item';
+      items.forEach(([name, preis, monat]) => {
+        const div = document.createElement("div");
+        div.className = "item";
 
-        const label = document.createElement('label');
-        const readablePrice = (price / 100).toFixed(2).replace('.', ',') + ' €';
-
-        if (category === '🎉 Monatsspecials' && month !== currentMonth) {
-          label.className = 'locked';
-          label.innerText = `🔒 ${name} – nur im ${getMonthName(month)} (${readablePrice})`;
+        if (kategorie === "🎉 Monatsspecials" && monat !== currentMonth) {
+          div.innerHTML = `<div class="locked">🔒 ${name}<br><small>Nur im ${monatName(monat)}</small></div>`;
         } else {
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.name = name;
-          checkbox.value = price;
-          label.appendChild(checkbox);
-          label.appendChild(document.createTextNode(` ${name} – ${readablePrice}`));
+          const id = name.replace(/\s+/g, "_");
+          div.innerHTML = `
+            <label>${name} (${(preis / 100).toFixed(2).replace('.', ',')} €)</label>
+            <input type="number" min="0" value="0" data-preis="${preis}" onchange="updateTotal()" />
+          `;
         }
 
-        itemDiv.appendChild(label);
-        div.appendChild(itemDiv);
+        menuDiv.appendChild(div);
       });
-
-      form.appendChild(div);
     });
 
-    function getMonthName(m) {
-      return [
-        "Januar", "Februar", "März", "April", "Mai", "Juni",
-        "Juli", "August", "September", "Oktober", "November", "Dezember"
-      ][m - 1];
+    function monatName(m) {
+      return ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"][m - 1];
     }
 
-    function submitOrder() {
-      const selected = Array.from(document.querySelectorAll('input[type=checkbox]:checked'));
-      if (selected.length === 0) {
-        alert("Bitte wähle mindestens ein Gericht aus.");
+    function updateTotal() {
+      let summe = 0;
+      document.querySelectorAll('input[type="number"]').forEach(input => {
+        const menge = parseInt(input.value) || 0;
+        const preis = parseInt(input.dataset.preis);
+        summe += menge * preis;
+      });
+      document.getElementById("gesamt").innerText = `Gesamt: ${(summe / 100).toFixed(2).replace('.', ',')} €`;
+    }
+
+    function sendOrder() {
+      const auswahl = [];
+      let gesamt = 0;
+
+      document.querySelectorAll('input[type="number"]').forEach(input => {
+        const menge = parseInt(input.value) || 0;
+        const preis = parseInt(input.dataset.preis);
+        if (menge > 0) {
+          const label = input.previousElementSibling.innerText;
+          auswahl.push(`${label} ×${menge}`);
+          gesamt += menge * preis;
+        }
+      });
+
+      if (auswahl.length === 0) {
+        alert("Keine Auswahl getroffen!");
         return;
       }
 
-      let message = "**Neue Bestellung eingegangen!**\n\n";
-      let total = 0;
+      const nachricht = `🧾 Neue Bestellung:\n\n${auswahl.join("\n")}\n\nGesamt: ${(gesamt / 100).toFixed(2).replace('.', ',')} €`;
 
-      selected.forEach(input => {
-        const name = input.name;
-        const price = parseInt(input.value);
-        total += price;
-        message += `• ${name} – ${(price / 100).toFixed(2).replace('.', ',')} €\n`;
-      });
+      const webhook = "https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-"; // <- Ersetzen!
 
-      message += `\n**Gesamt: ${(total / 100).toFixed(2).replace('.', ',')} €**`;
-
-      // Discord Webhook senden
-      const webhookUrl = "https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-"; // Ersetze durch echte URL
-
-      fetch(webhookUrl, {
+      fetch(webhook, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: message })
+        body: JSON.stringify({ content: nachricht })
       }).then(() => {
         alert("Bestellung erfolgreich gesendet!");
-        document.getElementById('orderForm').reset();
-      }).catch(err => {
-        console.error(err);
-        alert("Fehler beim Senden der Bestellung.");
-      });
+        location.reload();
+      }).catch(() => alert("Fehler beim Senden!"));
     }
   </script>
 </body>
