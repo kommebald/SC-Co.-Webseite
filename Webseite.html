@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dein Discord Food Hub</title>
+    <style>
+        /* Dein CSS bleibt unverändert */
+        :root {
+            --bg: #1e1e2f;
+            --text: white;
+            --tile: #0078d7;
+            --tile-hover: #005a9e;
+        }
+        body.light {
+            --bg: #f5f5f5;
+            --text: #111;
+            --tile: white;
+            --tile-hover: #e0e0e0;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+        }
+        .desktop {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 500px;
+            margin-bottom: 20px;
+            width: 90%;
+        }
+        .tile {
+            background-color: var(--tile);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        .tile:hover {
+            transform: scale(1.05);
+            background-color: var(--tile-hover);
+        }
+        .tile-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .tile-title {
+            font-size: 18px;
+        }
+        .footer, #clock {
+            position: fixed;
+            font-size: 0.9em;
+            color: var(--text);
+        }
+        .footer { bottom: 10px; left: 10px; }
+        #clock { bottom: 10px; right: 10px; }
+
+        #theme-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--tile);
+            color: var(--text);
+            cursor: pointer;
+        }
+        #theme-toggle:hover {
+            background-color: var(--tile-hover);
+        }
+
+        #profil {
+            position: fixed;
+            bottom: 10px;
+            right: 90px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #profil img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <button id="theme-toggle">Weißer Modus</button>
+
+    <div class="desktop">
+        <div class="tile" onclick="location.href='essen-bestellen.html'">
+            <div class="tile-icon">🚚</div>
+            <div class="tile-title">SC-Transport</div>
+        </div>
+
+        <div class="tile" onclick="location.href='essenrechner.html'">
+            <div class="tile-icon">🍔</div>
+            <div class="tile-title">SC-Foodtruck</div>
+        </div>
+
+        <div class="tile" onclick="location.href='rueckmeldung.html'">
+            <div class="tile-icon">⚖️</div>
+            <div class="tile-title">Anwaltkanzlei SC & Co.</div>
+        </div>
+    </div>
+
+    <div class="footer">Made by kommebald</div>
+    <div id="clock">Uhrzeit wird geladen...</div>
+
+    <div id="profil">
+        <img id="avatar" src="" alt="Profil">
+        <div id="username">Benutzer</div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date().toLocaleTimeString("de-DE", { timeZone: "Europe/Berlin" });
+            document.getElementById("clock").textContent = now;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const themeToggle = document.getElementById("theme-toggle");
+        const storedTheme = localStorage.getItem("theme");
+
+        if (storedTheme === "light") {
+            document.body.classList.add("light");
+            themeToggle.textContent = "Dunkler Modus";
+        } else {
+            themeToggle.textContent = "Weißer Modus";
+        }
+
+        themeToggle.addEventListener("click", () => {
+            document.body.classList.toggle("light");
+            const isLight = document.body.classList.contains("light");
+            localStorage.setItem("theme", isLight ? "light" : "dark");
+            themeToggle.textContent = isLight ? "Dunkler Modus" : "Weißer Modus";
+        });
+
+        const storedUser = JSON.parse(localStorage.getItem("discordUser") || "{}");
+
+        if (storedUser && storedUser.id && (storedUser.username || storedUser.global_name)) {
+            document.getElementById("username").textContent = storedUser.global_name || storedUser.username;
+
+            if (storedUser.avatar) {
+                const avatarExtension = storedUser.avatar.startsWith('a_') ? '.gif' : '.png';
+                document.getElementById("avatar").src = `https://cdn.discordapp.com/avatars/${storedUser.id}/${storedUser.avatar}${avatarExtension}`;
+            } else {
+                document.getElementById("avatar").src = "https://cdn-icons-png.flaticon.com/512/25/25694.png";
+            }
+        } else {
+            document.getElementById("username").textContent = "Unbekannt";
+            document.getElementById("avatar").src = "https://cdn-icons-png.flaticon.com/512/25/25694.png";
+        }
+
+        // Admin-Panel-Zugriff basierend auf Discord-ID
+        function adminLogin() {
+            // Dies sind die Discord-IDs der Benutzer, die Admin-Zugriff haben sollen.
+            // Füge hier alle IDs ein, die du autorisieren möchtest.
+            const ADMIN_DISCORD_IDS = [
+                "1196556299597521027",
+                "1268473955149152379",
+                "1072146615252566158",
+                "1063895939724624023"
+            ];
+
+            // Überprüfen, ob ein Benutzer angemeldet ist und seine ID in der Liste der Admins ist
+            if (storedUser && storedUser.id && ADMIN_DISCORD_IDS.includes(storedUser.id)) {
+                window.location.href = "admin_panel.html";
+            } else {
+                alert("❌ Du hast keine Berechtigung für das Admin Panel!");
+            }
+        }
+    </script>
+</body>
+</html>
