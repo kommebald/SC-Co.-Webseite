@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weiterleitung...</title>
+  <style>
+    body {
+      background: #1e1e2f;
+      color: black;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h1>⏳ Du wirst weitergeleitet...</h1>
+  <p>Wir erkennen dein Gerät und leiten dich automatisch weiter.</p>
+
+  <script>
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    const ziel = isMobile ? "index_mobile.html" : "index_desktop.html";
+    window.location.href = ziel;
+  </script>
+</body>
+</html>
