@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Anwaltkanzlei SC & Co.</title>
+  <style>
+    body {
+      background-color: #1e1e2f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.light {
+      background-color: #f5f5f5;
+      color: #111;
+    }
+
+    input, textarea {
+      width: 100%;
+      max-width: 500px;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 4px;
+      background-color: #333;
+      color: white;
+    }
+
+    body.light input, body.light textarea {
+      background-color: #fff;
+      color: #000;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #5865F2;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 20px;
+      margin-right: 10px;
+    }
+
+    body.light button {
+      background-color: #0078d7;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Anwaltkanzlei SC & Co.</h1>
+<p>Bitte beantworte alle Fragen, um eine Anfrage zu stellen:</p>
+
+<label for="name">Dein Name (IC):</label>
+<input type="text" id="name" placeholder="Max Mustermann">
+
+<label for="wann">Wann wird der Anwalt benötigt?:</label>
+<input type="text" id="wann" placeholder="z.B. Heute um 15 Uhr">
+
+<label for="wo">Wo wird er benötigt?:</label>
+<input type="text" id="wo" placeholder="Ort eingeben">
+
+<label for="unterschrift">Unterschrift:</label>
+<input type="text" id="unterschrift" placeholder="Dein Name oder Alias">
+
+<button onclick="anfrageAbsenden()">📨 Anfrage aufgeben</button>
+<button onclick="window.location.href='Webseite.html'">🔙 Zurück</button>
+
+<div class="footer">Made by kommebald</div>
+
+<script>
+  // Theme synchronisieren
+  const theme = localStorage.getItem("theme");
+  if (theme === "light") {
+    document.body.classList.add("light");
+  }
+
+  function anfrageAbsenden() {
+    const name = document.getElementById("name").value.trim();
+    const wann = document.getElementById("wann").value.trim();
+    const wo = document.getElementById("wo").value.trim();
+    const unterschrift = document.getElementById("unterschrift").value.trim();
+    const user = JSON.parse(localStorage.getItem("discordUser"));
+
+    if (!name || !wann || !wo || !unterschrift) {
+      alert("Bitte fülle alle Felder aus.");
+      return;
+    }
+
+    if (!user || !user.username) {
+      alert("Benutzername konnte nicht geladen werden. Bitte erneut einloggen.");
+      return;
+    }
+
+    const content = `**Name (IC):** ${name}\n**User:** ${user.username}\n**Wann wird der Anwalt benötigt?:** ${wann}\n**Wo wird er benötigt?:** ${wo}\n**Unterschrift:** ${unterschrift}`;
+
+    fetch("https://discord.com/api/webhooks/1395089337439359094/4dmqM-GuuwxqXsc-7V-nmUg3f0A0ICOLZtToLsOBTNrjEFkRwY_Zyj1Ee39aBUp-U6u5", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        content
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Fehler beim Senden der Anfrage.");
+      }
+      alert("Anfrage erfolgreich gesendet!");
+      document.getElementById("name").value = "";
+      document.getElementById("wann").value = "";
+      document.getElementById("wo").value = "";
+      document.getElementById("unterschrift").value = "";
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Beim Senden der Anfrage ist ein Fehler aufgetreten.");
+    });
+  }
+</script>
+
+</body>
+</html>
