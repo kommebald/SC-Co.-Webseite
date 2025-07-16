@@ -263,7 +263,7 @@ function bestellungAbsenden() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      content: `||<@&1349057747236425900>||\n📦 **Neue Bestellung von ${von}**\n📍 **Ort:** ${zielort}\n🧾 **Inhalt:**\n${bestellteGerichte.join("\n")}\n💰 **Gesamtbetrag:** ${(summe / 100).toFixed(2).replace('.', ',')} €`
+      content: `**Neue Bestellung von ${von}**\n📍 **Ort:** ${zielort}\n🧾 **Inhalt:**\n${bestellteGerichte.join("\n")}\n💰 **Gesamtbetrag:** ${(summe / 100).toFixed(2).replace('.', ',')} €`
     })
   });
 
