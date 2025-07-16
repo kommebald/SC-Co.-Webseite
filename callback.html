@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Discord Callback</title>
+</head>
+<body>
+    <p>Discord Login wird verarbeitet...</p>
+
+    <script>
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const token = params.get("access_token");
+
+        if (!token) {
+            alert("Discord-Login fehlgeschlagen. Bitte versuche es erneut.");
+            // Optional: Zurück zur Login-Seite leiten
+            window.location.href = "index.html"; // Annahme, dass deine Login-Seite so heißt
+        } else {
+            // Holen der Benutzerdaten von Discord
+            fetch("https://discord.com/api/users/@me", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    // Fehlerbehandlung für HTTP-Statuscodes ungleich 2xx
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(user => {
+                // Erstelle ein Objekt mit allen relevanten Daten
+                const discordUser = {
+                    id: user.id,
+                    username: user.username, // Der traditionelle Discord-Benutzername
+                    global_name: user.global_name, // Der neue "Anzeigename"
+                    avatar: user.avatar, // Der Avatar-Hash
+                    discriminator: user.discriminator, // (Optional) Der alte #XXXX Discriminator
+                    // Weitere Daten, die du vielleicht speichern möchtest:
+                    // email: user.email, // Benötigt den 'email' Scope
+                    // locale: user.locale // Benötigt den 'locale' Scope
+                };
+
+                // Speichere das gesamte Objekt als JSON-String im localStorage
+                localStorage.setItem("discordUser", JSON.stringify(discordUser));
+
+                // Optional: Den Access Token separat speichern, wenn du ihn für weitere API-Aufrufe brauchst
+                // localStorage.setItem("discordAccessToken", token);
+
+                // Weiterleitung zur Hauptseite
+                window.location.href = "Webseite.html";
+            })
+            .catch(error => {
+                console.error("Fehler beim Abrufen der Discord-Daten:", error);
+                alert("Ein Fehler ist aufgetreten beim Abrufen deiner Discord-Daten. Bitte versuche es erneut.");
+                // Optional: Zurück zur Login-Seite leiten
+                window.location.href = "index.html";
+            });
+        }
+    </script>
+</body>
+</html>
