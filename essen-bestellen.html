@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>🍔 Burger Bestellung</title>
+  <style>
+    body {
+      background-color: #1e1e2f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 6px;
+      border-radius: 4px;
+      border: none;
+      margin: 5px 0;
+      background: #333;
+      color: white;
+    }
+    .gericht {
+      background: #2e2e3f;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+    button {
+      background-color: #5865F2;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      margin: 10px 4px 10px 0;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🍔 Bestelle dein Lieblingsgericht</h1>
+
+<label>📍 Zielort:
+  <input type="text" id="zielort" placeholder="z. B. Raum 3B, EG">
+</label>
+
+<div id="gerichte-container"></div>
+
+<h2 id="gesamt">Gesamt: 0 €</h2>
+
+<button onclick="bestellungAbsenden()">🧾 Bestellung absenden</button>
+
+<script>
+const monat = new Date().toLocaleString('de-DE', { month: 'long' });
+
+const gerichte = {
+  "Klassiker vom Grill": [
+    ["Cheeseburger Supreme", 650],
+    ["BBQ-Bacon Burger", 700],
+    ["Veggie Crunch Burger 🥬", 590],
+    ["Doppel-Patty Inferno 🔥", 820],
+  ],
+  "Snacks & Fingerfood": [
+    ["XXL Currywurst", 450],
+    ["Hotdog Deluxe", 490],
+    ["Chicken Nuggets (6 Stück)", 350],
+    ["Chicken Nuggets (9 Stück)", 450],
+    ["Chicken Nuggets (12 Stück)", 550],
+    ["Mozzarella-Sticks 🧀", 390],
+  ],
+  "Beilagen & Extras": [
+    ["Pommes Spezial", 300],
+    ["Chili Cheese Fries 🌶️🧀", 390],
+    ["Wedges mit Sour Cream", 350],
+    ["Onion Rings 🧅", 320],
+  ],
+  "Drinks & Erfrischungen": [
+    ["Cola / Fanta / Sprite", 180],
+    ["Hausgemachter Eistee 🍋", 220],
+    ["Energy Fusion 🔋", 280],
+    ["Wassermelonen-Slushie 🍉", 250],
+  ],
+  "Monatsspecials": [
+    ["Juni: Mexican Meltdown – Burrito Burger 🌮", 790, "Juni"],
+    ["Juli: Summer Chicken Wrap – mit Mangosauce", 670, "Juli"],
+    ["August: Der Scharfe Maxx – extra spicy 🌶️🌶️🌶️", 750, "August"],
+  ]
+};
+
+function renderGerichte() {
+  const container = document.getElementById("gerichte-container");
+  container.innerHTML = "";
+  for (const [kategorie, items] of Object.entries(gerichte)) {
+    const section = document.createElement("section");
+    section.innerHTML = `<h2>━━━━━━━━━━━━━━━━━━━━━━━<br>🍽️ ${kategorie}<br>━━━━━━━━━━━━━━━━━━━━━━━</h2>`;
+
+    items.forEach(([name, preis, monatOnly]) => {
+      const disabled = monatOnly && monat !== monatOnly;
+      const hinweis = disabled ? " (nicht verfügbar)" : "";
+      const input = `<input type="number" min="0" value="0" data-preis="${preis}" ${disabled ? "disabled" : ""} oninput="updateTotal()">`;
+      const div = document.createElement("div");
+      div.className = "gericht";
+      div.dataset.name = name;
+      div.dataset.preis = preis;
+      div.innerHTML = `<strong>${name}${hinweis}</strong><br>Preis: ${preis} €<br>${input}`;
+      section.appendChild(div);
+    });
+
+    container.appendChild(section);
+  }
+}
+function updateTotal() {
+  let summe = 0;
+  document.querySelectorAll('.gericht input').forEach(input => {
+    const preis = parseInt(input.dataset.preis);
+    const menge = parseInt(input.value);
+    if (menge > 0) summe += preis * menge;
+  });
+  document.getElementById("gesamt").textContent = `Gesamt: ${summe / 100} €`;
+}
+function bestellungAbsenden() {
+  const zielort = document.getElementById("zielort").value.trim();
+  if (!zielort) return alert("Bitte gib einen Zielort an.");
+
+  const items = [];
+  let summe = 0;
+
+  document.querySelectorAll(".gericht").forEach(div => {
+    const input = div.querySelector("input");
+    const menge = parseInt(input.value);
+    const name = div.dataset.name;
+    const preis = parseInt(div.dataset.preis);
+    if (menge > 0) {
+      summe += menge * preis;
+      items.push(`${menge}× ${name} (${(preis / 100).toFixed(2)} €)`);
+    }
+  });
+
+  if (items.length === 0) return alert("Bitte wähle etwas aus.");
+
+  const embed = {
+    embeds: [{
+      title: "📦 Neue Bestellung",
+      color: 0x5865F2,
+      fields: [
+        { name: "Von", value: localStorage.getItem("discordName") || "Unbekannt", inline: true },
+        { name: "Ort", value: zielort, inline: true },
+        { name: "Inhalt", value: items.join("\n") },
+        { name: "Gesamt", value: `${(summe / 100).toFixed(2)} €`, inline: true },
+      ],
+      timestamp: new Date().toISOString()
+    }]
+  };
+
+  fetch("https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(embed)
+  });
+
+  alert("Bestellung gesendet!");
+  document.getElementById("zielort").value = "";
+  document.querySelectorAll("input[type=number]").forEach(i => i.value = 0);
+  updateTotal();
+}
+renderGerichte();
+</script>
+
+</body>
+</html>
