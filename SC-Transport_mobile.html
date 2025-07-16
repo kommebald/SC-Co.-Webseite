@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Essen bestellen</title>
+  <style>
+    body {
+      background-color: #1e1e2f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.light {
+      background-color: #f5f5f5;
+      color: #111;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      margin: 8px 0;
+      font-size: 1em;
+    }
+
+    body.light input {
+      background: #fff;
+      color: #000;
+    }
+
+    body:not(.light) input {
+      background: #333;
+      color: #fff;
+    }
+
+    .steuerung {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .steuerung button {
+      width: 100%;
+    }
+
+    .gerichte-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .gericht {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      background-color: #2e2e3f;
+      transition: background-color 0.3s;
+    }
+
+    body.light .gericht {
+      background-color: #fff;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background-color: #5865F2;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    body.light button {
+      background-color: #0078d7;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      text-align: center;
+      color: #aaa;
+    }
+
+    .locked {
+      opacity: 0.5;
+      font-style: italic;
+    }
+
+    h1, h2 {
+      font-size: 1.5em;
+      margin-top: 1.5em;
+    }
+
+    @media (min-width: 600px) {
+      .gerichte-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .gericht {
+        width: calc(50% - 12px);
+      }
+
+      .steuerung {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .steuerung button {
+        width: auto;
+        flex: 1;
+        min-width: 140px;
+      }
+
+      button {
+        width: auto;
+        margin-right: 10px;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        width: auto;
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Essen bestellen</h1>
+
+<label>📍 Wohin soll geliefert werden?
+  <input type="text" id="zielort" placeholder="z. B. Raum 3B, EG">
+</label>
+
+<div class="steuerung">
+  <input type="number" id="menge" value="1" min="1" placeholder="Menge">
+  <button onclick="auswahlKategorie('alle')">Alles auswählen</button>
+  <button onclick="auswahlKategorie('Getränke')">Nur Getränke</button>
+  <button onclick="auswahlKategorie('Hauptgerichte')">Nur Hauptgerichte</button>
+  <button onclick="auswahlKategorie('Snacks & Fingerfood')">Nur Snacks</button>
+  <button onclick="auswahlKategorie('Beilagen & Extras')">Nur Beilagen</button>
+  <button onclick="auswahlKategorie('🎉 Monatsspecials')">Nur Monatsspecials</button>
+  <button onclick="reset()">Zurücksetzen</button>
+</div>
+
+<div id="gerichte-bereiche"></div>
+
+<h2 id="gesamt">Gesamt: 0 €</h2>
+
+<button onclick="bestellungAbsenden()">🧾 Bestellung absenden</button>
+<button onclick="window.location.href='Webseite.html'">Zurück</button>
+
+<div class="footer">Made by kommebald</div>
+
+<script>
+// Der JavaScript-Code bleibt exakt gleich
+// (denn er funktioniert bereits responsiv und korrekt)
+
+const currentMonth = new Date().getMonth() + 1;
+
+const gerichte = {
+  'Hauptgerichte': [
+    ['Cheeseburger Supreme', 650],
+    ['BBQ-Bacon Burger', 700],
+    ['Veggie Crunch Burger 🥬', 590],
+    ['Doppel-Patty Inferno 🔥', 820],
+  ],
+  'Snacks & Fingerfood': [
+    ['XXL Currywurst', 450],
+    ['Hotdog Deluxe', 490],
+    ['Chicken Nuggets (6 Stück)', 350],
+    ['Chicken Nuggets (9 Stück)', 450],
+    ['Chicken Nuggets (12 Stück)', 550],
+    ['Mozzarella-Sticks 🧀', 390],
+  ],
+  'Beilagen & Extras': [
+    ['Pommes Spezial', 300],
+    ['Chili Cheese Fries 🌶️🧀', 390],
+    ['Wedges mit Sour Cream', 350],
+    ['Onion Rings 🧅', 320],
+  ],
+  'Getränke': [
+    ['Cola / Fanta / Sprite', 180],
+    ['Hausgemachter Eistee 🍋', 220],
+    ['Energy Fusion 🔋', 280],
+    ['Wassermelonen-Slushie 🍉', 250],
+  ],
+  '🎉 Monatsspecials': [
+    ['Mexican Meltdown – Burrito Burger 🌮', 790, 6],
+    ['Summer Chicken Wrap mit Mangosauce', 670, 7],
+    ['Der Scharfe Maxx 🌶️🌶️🌶️', 750, 8],
+  ]
+};
+
+function render() {
+  const bereiche = document.getElementById('gerichte-bereiche');
+  bereiche.innerHTML = '';
+  Object.entries(gerichte).forEach(([kategorie, items]) => {
+    const section = document.createElement('section');
+    const heading = document.createElement('h2');
+    heading.textContent = kategorie;
+    section.appendChild(heading);
+
+    const container = document.createElement('div');
+    container.className = 'gerichte-container';
+
+    items.forEach(item => {
+      const [name, preis, monat] = item;
+      const div = document.createElement('div');
+      div.className = 'gericht';
+      div.dataset.kategorie = kategorie;
+      div.dataset.name = name;
+
+      if (kategorie === '🎉 Monatsspecials' && monat !== currentMonth) {
+        div.classList.add('locked');
+        div.innerHTML = `
+          <strong>🔒 ${name}</strong><br>
+          <small>Nur im ${monatName(monat)}</small>
+        `;
+      } else {
+        div.innerHTML = `
+          <strong>${name} (${(preis / 100).toFixed(2).replace('.', ',')} €)</strong><br>
+          <input type="number" min="0" value="0" data-preis="${preis}" oninput="updateTotal()">
+        `;
+      }
+
+      container.appendChild(div);
+    });
+
+    section.appendChild(container);
+    bereiche.appendChild(section);
+  });
+}
+
+function monatName(m) {
+  return ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"][m - 1];
+}
+
+function updateTotal() {
+  let summe = 0;
+  document.querySelectorAll('.gericht input').forEach(input => {
+    const preis = parseInt(input.dataset.preis);
+    const menge = parseInt(input.value);
+    if (menge > 0) summe += preis * menge;
+  });
+  document.getElementById("gesamt").textContent = `Gesamt: ${(summe / 100).toFixed(2).replace('.', ',')} €`;
+}
+
+function auswahlKategorie(kategorie) {
+  const menge = parseInt(document.getElementById("menge").value) || 1;
+  document.querySelectorAll('.gericht').forEach(div => {
+    const input = div.querySelector('input');
+    if (!input) return;
+    if (kategorie === 'alle' || div.dataset.kategorie === kategorie) {
+      input.value = menge;
+    } else {
+      input.value = 0;
+    }
+  });
+  updateTotal();
+}
+
+function reset() {
+  document.querySelectorAll('.gericht input').forEach(input => input.value = 0);
+  updateTotal();
+}
+
+function bestellungAbsenden() {
+  const zielort = document.getElementById("zielort").value.trim();
+  if (!zielort) {
+    alert("Bitte gib den Zielort an.");
+    return;
+  }
+
+  const bestellteGerichte = [];
+  let summe = 0;
+
+  document.querySelectorAll('.gericht').forEach(div => {
+    const input = div.querySelector('input');
+    if (!input) return;
+    const menge = parseInt(input.value);
+    const preis = parseInt(input.dataset.preis);
+    if (menge > 0) {
+      bestellteGerichte.push(`${menge}× ${div.dataset.name} (${(preis / 100).toFixed(2).replace('.', ',')} €)`);
+      summe += menge * preis;
+    }
+  });
+
+  if (bestellteGerichte.length === 0) {
+    alert("Bitte wähle mindestens ein Gericht aus.");
+    return;
+  }
+
+  const von = localStorage.getItem("discordName") || "Unbekannt";
+
+  const bestellung = {
+    von,
+    ort: zielort,
+    summe,
+    inhalt: bestellteGerichte.join("\n")
+  };
+
+  fetch("https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content: `**Neue Bestellung von ${von}**\n📍 **Ort:** ${zielort}\n🧾 **Inhalt:**\n${bestellteGerichte.join("\n")}\n💰 **Gesamtbetrag:** ${(summe / 100).toFixed(2).replace('.', ',')} €`
+    })
+  });
+
+  alert("Bestellung wurde gesendet!");
+  reset();
+  document.getElementById("zielort").value = "";
+}
+
+const theme = localStorage.getItem("theme");
+if (theme === "light") {
+  document.body.classList.add("light");
+}
+
+render();
+</script>
+
+</body>
+</html>
