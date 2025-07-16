@@ -1,261 +1,163 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>🍔 Essen bestellen</title>
+  <meta charset="UTF-8">
+  <title>Essensbestellung</title>
   <style>
     body {
-      background-color: #0e0f1a;
-      color: #fff;
       font-family: Arial, sans-serif;
+      background: #f2f2f2;
       padding: 20px;
     }
-
     h1 {
-      font-size: 24px;
-      margin-bottom: 10px;
+      text-align: center;
     }
-
-    input[type="text"], input[type="number"] {
-      padding: 8px;
-      border-radius: 5px;
-      border: none;
-      background: #222;
-      color: #fff;
-      margin-right: 10px;
-    }
-
-    .controls {
-      margin-bottom: 20px;
-    }
-
-    .gericht {
-      border: 1px solid #444;
-      border-radius: 8px;
-      padding: 10px;
-      margin: 8px;
-      background-color: #1a1b2e;
-      width: 240px;
-      display: inline-block;
-      vertical-align: top;
-    }
-
-    .gericht input[type="number"] {
-      width: 40px;
-    }
-
-    section {
+    .category {
       margin-bottom: 30px;
     }
-
-    button {
-      background-color: #5865F2;
-      color: white;
-      padding: 8px 12px;
-      border: none;
+    .category h2 {
+      background-color: #ddd;
+      padding: 10px;
       border-radius: 6px;
-      margin: 5px;
+    }
+    .item {
+      margin: 5px 0;
+    }
+    .locked {
+      color: #aaa;
+    }
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #333;
+      color: white;
+      border: none;
       cursor: pointer;
     }
-
     button:hover {
-      background-color: #4752c4;
-    }
-
-    .disabled {
-      opacity: 0.4;
-    }
-
-    .kategorie-title {
-      font-size: 20px;
-      margin-top: 25px;
+      background: #555;
     }
   </style>
 </head>
 <body>
+  <h1>Essensbestellung</h1>
+  <form id="orderForm"></form>
+  <button onclick="submitOrder()">Bestellung abschicken</button>
 
-<h1>🍽️ Essen bestellen</h1>
+  <script>
+    const currentMonth = new Date().getMonth() + 1;
 
-<div class="controls">
-  <label>📍 Wohin soll geliefert werden?
-    <input type="text" id="zielort" placeholder="z. B. Raum 3B, EG">
-  </label>
+    const menu = {
+      '🍔 Klassiker vom Grill': [
+        ['Cheeseburger Supreme', 650],
+        ['BBQ-Bacon Burger', 700],
+        ['Veggie Crunch Burger 🥬', 590],
+        ['Doppel-Patty Inferno 🔥', 820]
+      ],
+      '🌭 Snacks & Fingerfood': [
+        ['XXL Currywurst', 450],
+        ['Hotdog Deluxe', 490],
+        ['Chicken Nuggets (6 Stück)', 350],
+        ['Chicken Nuggets (9 Stück)', 450],
+        ['Chicken Nuggets (12 Stück)', 550],
+        ['Mozzarella-Sticks 🧀', 390]
+      ],
+      '🍟 Beilagen & Extras': [
+        ['Pommes Spezial', 300],
+        ['Chili Cheese Fries 🌶️🧀', 390],
+        ['Wedges mit Sour Cream', 350],
+        ['Onion Rings 🧅', 320]
+      ],
+      '🥤 Drinks & Erfrischungen': [
+        ['Cola / Fanta / Sprite', 180],
+        ['Hausgemachter Eistee 🍋', 220],
+        ['Energy Fusion 🔋', 280],
+        ['Wassermelonen-Slushie 🍉', 250]
+      ],
+      '🎉 Monatsspecials': [
+        ['Mexican Meltdown – Burrito Burger 🌮', 790, 6], // Juni
+        ['Summer Chicken Wrap mit Mangosauce', 670, 7],   // Juli
+        ['Der Scharfe Maxx 🌶️🌶️🌶️', 750, 8]              // August
+      ]
+    };
 
-  <label>Menge:
-    <input type="number" id="mengeDefault" value="1" min="1" max="99">
-  </label>
+    const form = document.getElementById('orderForm');
 
-  <button onclick="selectAll()">Alles auswählen</button>
-  <button onclick="filter('Getränke')">Nur Getränke</button>
-  <button onclick="filter('Hauptgerichte')">Nur Hauptgerichte</button>
-  <button onclick="filter('Vorspeisen')">Nur Vorspeisen</button>
-  <button onclick="filter('Süßspeisen')">Nur Süßspeisen</button>
-  <button onclick="resetFilter()">Zurücksetzen</button>
-</div>
+    Object.entries(menu).forEach(([category, items]) => {
+      const div = document.createElement('div');
+      div.className = 'category';
+      const h2 = document.createElement('h2');
+      h2.textContent = category;
+      div.appendChild(h2);
 
-<div id="gerichte-container"></div>
+      items.forEach(([name, price, month]) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item';
 
-<h2 id="gesamt">Gesamt: 0 €</h2>
+        const label = document.createElement('label');
+        const readablePrice = (price / 100).toFixed(2).replace('.', ',') + ' €';
 
-<button onclick="bestellungAbsenden()">📦 Bestellung absenden</button>
-<button onclick="location.reload()">Zurück</button>
+        if (category === '🎉 Monatsspecials' && month !== currentMonth) {
+          label.className = 'locked';
+          label.innerText = `🔒 ${name} – nur im ${getMonthName(month)} (${readablePrice})`;
+        } else {
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.name = name;
+          checkbox.value = price;
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(` ${name} – ${readablePrice}`));
+        }
 
-<script>
-const aktuellerMonat = new Date().toLocaleString('de-DE', { month: 'long' });
+        itemDiv.appendChild(label);
+        div.appendChild(itemDiv);
+      });
 
-const gerichte = {
-  "Vorspeisen": [
-    ["Bruschetta mit Tomaten & Basilikum", 7.5],
-    ["Salat aller Art", 4.0],
-    ["Suppen aller Art", 5.0]
-  ],
-  "Hauptgerichte": [
-    ["Döner", 8.0],
-    ["Spaghetti Bolognese", 8.5],
-    ["Bratwurst im Brötchen", 6.0],
-    ["Currywurst mit Pommes", 7.0],
-    ["Kleine Pommes", 4.0],
-    ["Große Pommes", 5.0],
-    ["Milchreis", 6.5],
-    ["Königsberger Klopse", 7.0],
-    ["Rindfleisch Berliner Art", 24.0],
-    ["Schnitzel", 17.0],
-    ["Buletten mit Kartoffelsalat", 9.0],
-    ["Pizza aller Art", 12.0],
-    ["Cheeseburger", 7.0],
-    ["Hamburger", 6.0]
-  ],
-  "Getränke": [
-    ["Espresso", 1.4],
-    ["Cappuccino", 2.8],
-    ["Schwarzer Tee", 2.0],
-    ["Grüner Tee", 2.5],
-    ["Kräuter- und Früchtetee", 2.5],
-    ["Heiße Schokolade", 3.0],
-    ["Fanta", 1.8],
-    ["Cola", 1.8],
-    ["Säfte", 1.8],
-    ["Stilles Wasser", 1.8],
-    ["Sprudel Wasser", 1.8],
-    ["Ayran", 1.5]
-  ],
-  "Süßspeisen": [
-    ["Kuchen aller Art", 2.5],
-    ["Berliner / Pfannkuchen", 2.0],
-    ["Waffel", 2.5],
-    ["Quarkbällchen (5 Stück)", 2.0],
-    ["Rote Grütze", 4.0],
-    ["Eiskugel (versch. Sorten)", 2.0],
-    ["Apfelstrudel", 6.0],
-    ["Hamburger Franzbrötchen", 2.0]
-  ],
-  "Monatsspecials": [
-    ["Juni: Mexican Meltdown 🌮", 7.9, "Juni"],
-    ["Juli: Summer Chicken Wrap mit Mangosauce", 6.7, "Juli"],
-    ["August: Der Scharfe Maxx 🌶️", 7.5, "August"]
-  ]
-};
-
-function renderGerichte() {
-  const container = document.getElementById("gerichte-container");
-  container.innerHTML = "";
-
-  for (const [kategorie, items] of Object.entries(gerichte)) {
-    const section = document.createElement("section");
-    section.dataset.kategorie = kategorie;
-    section.innerHTML = `<div class="kategorie-title">${kategorie}</div>`;
-
-    items.forEach(([name, preis, monat]) => {
-      const istAktiv = !monat || monat === aktuellerMonat;
-      const card = document.createElement("div");
-      card.className = "gericht";
-      if (!istAktiv) card.classList.add("disabled");
-      card.dataset.kategorie = kategorie;
-
-      card.innerHTML = `
-        <div><strong>${name}</strong> (${preis.toFixed(2).replace('.', ',')} €)</div>
-        <input type="number" min="0" value="0" ${!istAktiv ? "disabled" : ""} data-preis="${preis}" oninput="updateTotal()">
-      `;
-      section.appendChild(card);
+      form.appendChild(div);
     });
 
-    container.appendChild(section);
-  }
-}
-
-function updateTotal() {
-  let summe = 0;
-  document.querySelectorAll('.gericht input[type=number]').forEach(input => {
-    const menge = parseInt(input.value);
-    const preis = parseFloat(input.dataset.preis);
-    if (menge > 0) summe += menge * preis;
-  });
-  document.getElementById("gesamt").textContent = `Gesamt: ${summe.toFixed(2).replace('.', ',')} €`;
-}
-
-function selectAll() {
-  const menge = parseInt(document.getElementById("mengeDefault").value);
-  document.querySelectorAll('.gericht input[type=number]:not(:disabled)').forEach(input => input.value = menge);
-  updateTotal();
-}
-
-function filter(kategorie) {
-  document.querySelectorAll("section").forEach(section => {
-    section.style.display = section.dataset.kategorie === kategorie ? "block" : "none";
-  });
-}
-
-function resetFilter() {
-  document.querySelectorAll("section").forEach(section => section.style.display = "block");
-}
-
-function bestellungAbsenden() {
-  const zielort = document.getElementById("zielort").value.trim();
-  if (!zielort) return alert("Bitte gib einen Zielort an.");
-
-  const items = [];
-  let summe = 0;
-
-  document.querySelectorAll(".gericht").forEach(card => {
-    const input = card.querySelector("input");
-    const menge = parseInt(input.value);
-    const name = card.querySelector("strong").textContent;
-    const preis = parseFloat(input.dataset.preis);
-    if (menge > 0) {
-      summe += menge * preis;
-      items.push(`${menge}× ${name} (${preis.toFixed(2).replace('.', ',')} €)`);
+    function getMonthName(m) {
+      return [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+      ][m - 1];
     }
-  });
 
-  if (items.length === 0) return alert("Bitte wähle etwas aus.");
+    function submitOrder() {
+      const selected = Array.from(document.querySelectorAll('input[type=checkbox]:checked'));
+      if (selected.length === 0) {
+        alert("Bitte wähle mindestens ein Gericht aus.");
+        return;
+      }
 
-  const embed = {
-    embeds: [{
-      title: "📦 Neue Bestellung",
-      color: 0x5865F2,
-      fields: [
-        { name: "Ort", value: zielort, inline: true },
-        { name: "Inhalt", value: items.join("\n") },
-        { name: "Gesamt", value: `${summe.toFixed(2).replace('.', ',')} €`, inline: true },
-      ],
-      timestamp: new Date().toISOString()
-    }]
-  };
+      let message = "**Neue Bestellung eingegangen!**\n\n";
+      let total = 0;
 
-  fetch("https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(embed)
-  });
+      selected.forEach(input => {
+        const name = input.name;
+        const price = parseInt(input.value);
+        total += price;
+        message += `• ${name} – ${(price / 100).toFixed(2).replace('.', ',')} €\n`;
+      });
 
-  alert("✅ Bestellung gesendet!");
-  document.getElementById("zielort").value = "";
-  document.querySelectorAll("input[type=number]").forEach(i => i.value = 0);
-  updateTotal();
-}
+      message += `\n**Gesamt: ${(total / 100).toFixed(2).replace('.', ',')} €**`;
 
-renderGerichte();
-</script>
+      // Discord Webhook senden
+      const webhookUrl = "https://discord.com/api/webhooks/1395065575796904037/K0-7PL3Dj1l2NL7ggWWIzqB5_qS2LWbxgrEl9G48XmRIEJH2nyKhvS5iLosifBh_fP4-"; // Ersetze durch echte URL
 
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: message })
+      }).then(() => {
+        alert("Bestellung erfolgreich gesendet!");
+        document.getElementById('orderForm').reset();
+      }).catch(err => {
+        console.error(err);
+        alert("Fehler beim Senden der Bestellung.");
+      });
+    }
+  </script>
 </body>
 </html>
